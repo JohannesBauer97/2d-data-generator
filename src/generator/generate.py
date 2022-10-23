@@ -6,4 +6,7 @@ generator = Generator(
     symbols_folder_path="symbols",
 )
 
-generator.generate()
+generator.generate(
+    number_of_occurence_per_symbol=100,
+    max_symbols_on_background=10
+)
