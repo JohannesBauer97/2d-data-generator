@@ -58,6 +58,14 @@ class Generator:
 
     @classmethod
     def paste_symbols_to_background(cls, symbols: list[Image.Image], background: Image.Image):
+        """
+        Pastes an array of images into a background image and returns the result and YOLOv5 annotation format.
+        The annotation class is just an index and does not refer to the classes parsed from the symbols folder.
+        :param symbols: Array of symbol images
+        :param background: Background image
+        :return: Result Image, Annotations Array
+        """
+
         # Sort symbols: big to small
         symbols.sort(key=lambda x: x.size, reverse=True)
 
@@ -129,3 +137,7 @@ class Generator:
             if y1 <= y <= y2:
                 return True
         return False
+
+    @classmethod
+    def generate(cls):
+        print()
