@@ -67,6 +67,9 @@ class Generator:
         # Create a copy of background to not modify it
         bg = background.copy()
 
+        # Result object (to be returned)
+        annotations = []
+
         for symbol in symbols:
             min_x, min_y = 0, 0
             max_x = bg.width - symbol.width
@@ -95,14 +98,27 @@ class Generator:
                     else:
                         overlapping = False
 
-                # If non-overlapping coord found, save rect and exit loop
+                # If non-overlapping coord found, save rect, annotation and exit loop
                 if not overlapping:
+                    # Paste image
                     rgba_symbol = symbol.convert("RGBA")
                     bg.paste(rgba_symbol, (x1, y1), rgba_symbol)
+                    # Save rect
                     pasted_symbol_rect_coords.append((x1, y1, w, h))
+                    # Save annotation
+                    x_center = x1 + (symbol.width / 2)
+                    y_center = y1 + (symbol.height / 2)
+                    x_center_normalized = x_center / bg.width
+                    y_center_normalized = y_center / bg.height
+                    width_normalized = symbol.width / bg.width
+                    height_normalized = symbol.height / bg.height
+                    annotation_index = len(annotations)
+                    annotation = f"{annotation_index} {x_center_normalized} {y_center_normalized} {width_normalized} {height_normalized}"
+                    annotations.append(annotation)
+                    # Exit loop
                     break
 
-        return bg
+        return bg, annotations
 
     @classmethod
     def point_in_rect(cls, point, rect):
