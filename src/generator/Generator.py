@@ -58,23 +58,11 @@ class Generator:
 
     @classmethod
     def paste_symbols_to_background(cls, symbols: list[Image.Image], background: Image.Image):
-
-        # Paste big symbols first
-        # Generate random x1, y1 coords, calculate based on width, height the x2, y2 coord
-        #
-        # Overlapping Check: (case: overlapping)
-        #   Have a list (pastedSymbols) of all already pasted symbol coords: [[x1,y1,x2,y2],...]
-        #   overlapping = false
-        #   ForEach p in pastedSymbols:
-        #     if x1 >= px1 and x1 <= px2 and y1 >= py1 and y2 <= py2:
-        #       overlapping = true
-        #
-
         # Sort symbols: big to small
         symbols.sort(key=lambda x: x.size, reverse=True)
 
         # Coords of already pasted images
-        pasted_symbol_coords = []
+        pasted_symbol_rect_coords = []
 
         # Create a copy of background to not modify it
         bg = background.copy()
@@ -84,47 +72,44 @@ class Generator:
             max_x = bg.width - symbol.width
             max_y = bg.height - symbol.height
 
+            if max_y <= 0 and max_y <= 0:
+                # skipping when symbol is bigger than background image
+                continue
+
             for i in range(20):  # 20 tryouts to find a fitting coordinate
                 overlapping = True
                 x1 = random.randint(min_x, max_x)
                 y1 = random.randint(min_y, max_y)
-                x2 = x1 + symbol.width
-                y2 = y1 + symbol.height
-                x3 = x1
-                y3 = y2
-                x4 = x2
-                y4 = y1
-
-                """
-                (x1,y1) --------- (x4, y4)
-                        |       |
-                        |       |
-                        |       |
-                (x3,y3) --------- (x2, y2)
-                """
+                w = int(symbol.width)
+                h = int(symbol.height)
 
                 # First symbol - no overlapping check needed
-                if len(pasted_symbol_coords) <= 0:
+                if len(pasted_symbol_rect_coords) <= 0:
                     overlapping = False
 
                 # Check if symbol would overlap other symbols
-                for p in pasted_symbol_coords:
-                    px1, py1, px2, py2, px3, py3, px4, py4 = p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]
-
-                    # Check top left point and bottom right point if they are outside
-                    if ((x1 < px1 or x1 > px2) and (y1 < py1 or y1 > py2)) and ((x2 < px1 or x2 > px2) and (y2 < py1 or y2 > py2)):
-                        if ((x3 < px3 or x3 > px4) and (y3 < py3 or y3 > py4)) and ((x4 < px3 or x4 > px4) and (y4 < py3 or y4 > py4)):
-                            overlapping = False
-                        else:
-                            overlapping = True
-                    else:
+                for rect in pasted_symbol_rect_coords:
+                    # Check if point is in rect
+                    if cls.point_in_rect((x1, y1), rect) or cls.point_in_rect((x1+w, y1+h), rect) or cls.point_in_rect((x1, y1+h), rect) or cls.point_in_rect((x1+w, y1), rect):
                         overlapping = True
+                    else:
+                        overlapping = False
 
-                # If non-overlapping coord found, save coords and exit loop
+                # If non-overlapping coord found, save rect and exit loop
                 if not overlapping:
                     rgba_symbol = symbol.convert("RGBA")
                     bg.paste(rgba_symbol, (x1, y1), rgba_symbol)
-                    pasted_symbol_coords.append([x1, y1, x2, y2, x3, y3, x4, y4])
+                    pasted_symbol_rect_coords.append((x1, y1, w, h))
                     break
 
         return bg
+
+    @classmethod
+    def point_in_rect(cls, point, rect):
+        x1, y1, w, h = rect
+        x2, y2 = x1+w, y1+h
+        x, y = point
+        if x1 <= x <= x2:
+            if y1 <= y <= y2:
+                return True
+        return False
