@@ -190,9 +190,6 @@ class Generator:
             cls.save_to_disk(composition, annotations, f"image{file_name_index}")
 
             file_name_index += 1
-            if next_index >= last_index:
-                work_in_progress = False
-                break
 
     @classmethod
     def save_to_disk(cls, composition: Image.Image, annotations: list[str], name: str):
