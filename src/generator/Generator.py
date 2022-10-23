@@ -142,7 +142,10 @@ class Generator:
     def generate(cls,
                  number_of_occurence_per_symbol = 2,
                  min_symbols_on_background=1,
-                 max_symbols_on_background=2):
+                 max_symbols_on_background=2,
+                 relative_resize=True,
+                 random_rotation=True,
+                 random_background_color=True):
         # Creating an array of all symbol paths (multiplied by number of times it should occur)
         all_symbol_paths = []
         for symbol_path in cls.symbol_paths:
@@ -178,6 +181,28 @@ class Generator:
 
             # Get a background
             background = Image.open(random.choice(cls.background_paths))
+
+            # Resizing, Rotation
+            if relative_resize or random_rotation or random_background_color:
+                for i, symbol in enumerate(symbols):
+                    if relative_resize:
+                        available_sizes = [
+                            (int(0.05*background.width), int(0.05*background.height)),
+                            (int(0.08*background.width), int(0.08*background.height)),
+                            (int(0.1*background.width), int(0.1*background.height))
+                        ]
+                        symbols[i] = symbol.resize(random.choice(available_sizes))
+
+                    if random_rotation:
+                        available_rotations = [0, 5, 10]
+                        symbols[i] = symbol.rotate(random.choice(available_rotations))
+
+                    if random_background_color:
+                        available_colors = ["red", "green", "blue", "white"]
+                        bg = Image.new("RGBA", symbol.size, random.choice(available_colors))
+                        bg.paste(symbol, (0, 0), symbol)
+                        symbols[i] = bg
+
 
             # Composite symbols into background
             composition, annotations = cls.paste_symbols_to_background(symbols, background)
