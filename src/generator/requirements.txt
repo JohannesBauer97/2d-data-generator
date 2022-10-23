@@ -1,0 +1,2 @@
+# Usage: pip install -r requirements.txt
+Pillow>=7.1.2
