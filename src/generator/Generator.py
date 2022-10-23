@@ -13,7 +13,7 @@ class Generator:
     # Other class members
     symbol_paths = []
     background_paths = []
-    classes = []
+    symbols = []
 
     def __init__(self,
                  backgrounds_folder_path: str,
@@ -46,7 +46,7 @@ class Generator:
         print(f"Loaded {len(cls.symbol_paths)} symbol images from {cls.symbols_folder_path}")
 
         # Classes
-        cls.classes = [Path(x).stem for x in cls.symbol_paths]
+        cls.symbols = [Path(x).stem for x in cls.symbol_paths]
 
         # Backgrounds
         backgrounds_png = glob.glob(os.path.join(cls.backgrounds_folder_path, "*.png"))
@@ -121,7 +121,7 @@ class Generator:
                     width_normalized = symbol.width / bg.width
                     height_normalized = symbol.height / bg.height
                     annotation_index = len(annotations)
-                    annotation = f"{annotation_index} {x_center_normalized} {y_center_normalized} {width_normalized} {height_normalized}"
+                    annotation = f"class{annotation_index} {x_center_normalized} {y_center_normalized} {width_normalized} {height_normalized}"
                     annotations.append(annotation)
                     # Exit loop
                     break
@@ -139,5 +139,71 @@ class Generator:
         return False
 
     @classmethod
-    def generate(cls):
-        print()
+    def generate(cls,
+                 number_of_occurence_per_symbol = 2,
+                 min_symbols_on_background=1,
+                 max_symbols_on_background=2):
+        # Creating an array of all symbol paths (multiplied by number of times it should occur)
+        all_symbol_paths = []
+        for symbol_path in cls.symbol_paths:
+            for i in range(number_of_occurence_per_symbol):
+                all_symbol_paths.append(symbol_path)
+        # Shuffle the array to get random symbols when iterating later
+        random.shuffle(all_symbol_paths)
+
+        # Error handling
+        if max_symbols_on_background > len(all_symbol_paths):
+            print(f"It's not possible to set a bigger value for max_symbols_on_background ({max_symbols_on_background}) than {len(all_symbol_paths)}")
+            return
+
+        last_index = 0
+        file_name_index = 0
+        do_work = True
+        while do_work:
+
+            next_index = last_index + random.randint(min_symbols_on_background, max_symbols_on_background)
+            symbols = [] # random batch of symbol paths
+            symbol_class_indices = [] # corresponding class index
+            tmp = last_index # to avoid that range() mutates while looping
+
+            if next_index >= len(all_symbol_paths):
+                next_index = len(all_symbol_paths)
+                do_work = False
+
+            for i in range(tmp - 1, next_index):
+                class_index = cls.symbol_paths.index(all_symbol_paths[i])
+                symbols.append(Image.open(all_symbol_paths[i]))
+                symbol_class_indices.append(class_index)
+                last_index = next_index + 1
+
+            # Get a background
+            background = Image.open(random.choice(cls.background_paths))
+
+            # Composite symbols into background
+            composition, annotations = cls.paste_symbols_to_background(symbols, background)
+
+            # Replace annotation class placeholder with correct class index
+            for i, annotation in enumerate(annotations):
+                annotations[i] = annotation.replace(f"class{i}", str(symbol_class_indices[i]))
+
+            # Save to disk
+            cls.save_to_disk(composition, annotations, f"image{file_name_index}")
+
+            file_name_index += 1
+            if next_index >= last_index:
+                work_in_progress = False
+                break
+
+    @classmethod
+    def save_to_disk(cls, composition: Image.Image, annotations: list[str], name: str):
+        # Creating output folder structure
+        images_folder = os.path.join("out", "images")
+        labels_folder = os.path.join("out", "labels")
+        Path(images_folder).mkdir(parents=True, exist_ok=True)
+        Path(labels_folder).mkdir(parents=True, exist_ok=True)
+
+        composition.save(os.path.join(images_folder, f"{name}.jpg"))
+        annotation_file = open(os.path.join(labels_folder, f"{name}.txt"), "w")
+        for annotation in annotations:
+            annotation_file.write(annotation + "\n")
+        annotation_file.close()
