@@ -185,6 +185,7 @@ class Generator:
             # Resizing, Rotation
             if relative_resize or random_rotation or random_background_color:
                 for i, symbol in enumerate(symbols):
+                    # Size
                     if relative_resize:
                         available_sizes = [
                             (int(0.05*background.width), int(0.05*background.height)),
@@ -193,10 +194,12 @@ class Generator:
                         ]
                         symbols[i] = symbol.resize(random.choice(available_sizes))
 
+                    # Rotation
                     if random_rotation:
                         available_rotations = [0, 5, 10]
                         symbols[i] = symbol.rotate(random.choice(available_rotations))
 
+                    # Color
                     if random_background_color:
                         available_colors = ["red", "green", "blue", "white"]
                         bg = Image.new("RGBA", symbol.size, random.choice(available_colors))
