@@ -1,3 +1,9 @@
 .DS_Store
 **/.DS_Store
 **/.idea
+src/generator/backgrounds/large.jpg
+src/generator/backgrounds/medium.jpg
+src/generator/backgrounds/small.jpg
+src/generator/symbols/A300.png
+src/generator/symbols/B500.png
+src/generator/symbols/C150.png
