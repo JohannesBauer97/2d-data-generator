@@ -180,7 +180,13 @@ class Generator:
                 last_index = next_index + 1
 
             # Get a background
-            background = Image.open(random.choice(cls.background_paths))
+            if len(cls.background_paths) == 0:
+                print(f"All background used, stopping generator...")
+                return
+
+            background_path = random.choice(cls.background_paths)
+            cls.background_paths.remove(background_path)
+            background = Image.open(background_path)
 
             # Resizing, Rotation
             if relative_resize or random_rotation or random_background_color:
