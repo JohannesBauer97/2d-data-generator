@@ -7,6 +7,6 @@ generator = Generator(
 )
 
 generator.generate(
-    number_of_occurence_per_symbol=1000,
-    max_symbols_on_background=10
+    number_of_occurence_per_symbol=100,
+    max_symbols_on_background=5
 )
